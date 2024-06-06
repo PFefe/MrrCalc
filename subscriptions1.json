@@ -1,0 +1,57 @@
+[
+  {
+    "subscription_id": "sub_001",
+    "customer_id": "cust_001",
+    "start_at": "2024-01-01T00:00:00Z",
+    "end_at": null,
+    "amount": "100.00",
+    "currency": "USD",
+    "interval": "month",
+    "status": "active",
+    "cancelled_at": null
+  },
+  {
+    "subscription_id": "sub_002",
+    "customer_id": "cust_002",
+    "start_at": "2024-02-01T00:00:00Z",
+    "end_at": "2024-06-01T00:00:00Z",
+    "amount": "50.00",
+    "currency": "EUR",
+    "interval": "month",
+    "status": "cancelled",
+    "cancelled_at": "2024-05-01T00:00:00Z"
+  },
+  {
+    "subscription_id": "sub_003",
+    "customer_id": "cust_003",
+    "start_at": "2024-03-01T00:00:00Z",
+    "end_at": "2024-04-01T00:00:00Z",
+    "amount": "75.00",
+    "currency": "USD",
+    "interval": "month",
+    "status": "amended",
+    "cancelled_at": null
+  },
+  {
+    "subscription_id": "sub_004",
+    "customer_id": "cust_002",
+    "start_at": "2024-07-15T09:45:43Z",
+    "end_at": null,
+    "amount": "55.00",
+    "currency": "EUR",
+    "interval": "month",
+    "status": "active",
+    "cancelled_at": null
+  },
+  {
+    "subscription_id": "sub_005",
+    "customer_id": "cust_003",
+    "start_at": "2024-04-01T00:00:00Z",
+    "end_at": null,
+    "amount": "60.00",
+    "currency": "GBP",
+    "interval": "year",
+    "status": "active",
+    "cancelled_at": null
+  }
+]
