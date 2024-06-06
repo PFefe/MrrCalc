@@ -86,7 +86,7 @@ func main() {
 	// we initialize our Subscriptions array
 	var subscriptions []Subscription
 
-	// we unmarshal our byteArray which contains our
+	// unmarshal our byteArray which contains our
 	// jsonFile's content into 'subscriptions' which we defined above
 	err = json.Unmarshal(
 		byteValue,
@@ -98,9 +98,6 @@ func main() {
 			err,
 		)
 	}
-
-	// we iterate through every subscription within our subscriptions array and
-	// print out the fields
 
 	// Calculate Present MRR Net Value:
 	todaysDate := time.Now()
@@ -170,44 +167,7 @@ func main() {
 		}
 	}
 
-	for i := 0; i < len(subscriptions); i++ {
-		fmt.Println(
-			"subscription_id: ",
-			subscriptions[i].Subscription_id,
-		)
-		fmt.Println(
-			"customer_id: ",
-			subscriptions[i].Customer_id,
-		)
-		fmt.Println(
-			"start_at: ",
-			subscriptions[i].Start_at,
-		)
-		fmt.Println(
-			"end_at: ",
-			subscriptions[i].End_at,
-		)
-		fmt.Println(
-			"amount: ",
-			subscriptions[i].Amount,
-		)
-		fmt.Println(
-			"currency: ",
-			subscriptions[i].Currency,
-		)
-		fmt.Println(
-			"interval: ",
-			subscriptions[i].Interval,
-		)
-		fmt.Println(
-			"status: ",
-			subscriptions[i].Status,
-		)
-		fmt.Println(
-			"cancelled_at: ",
-			subscriptions[i].Cancelled_at,
-		)
-	}
+	// print the currency and period for test
 	fmt.Println(
 		"currency: ",
 		currency,
@@ -223,7 +183,7 @@ func main() {
 		convertCurrency(
 			100.00,
 			"USD",
-			"USD",
+			"EUR",
 		),
 	)
 
