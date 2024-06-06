@@ -140,7 +140,7 @@ func main() {
 			currency,
 		)
 		fmt.Printf(
-			"Subscription ID: %s, Amount: %f, Converted Amount: %f, Status: %s, IsExpired: %t, Interval: %s\n",
+			"Subscription_ID: %s, Amount: %f, Converted Amount: %.2f, Status: %s, IsExpired: %t, Interval: %s\n",
 			subscriptions[i].Subscription_id,
 			amount,
 			convertedAmount,
@@ -149,14 +149,14 @@ func main() {
 			interval,
 		)
 		if (status == "active" || status == "amended") && !isExpired {
-			if interval == "monthly" {
+			if interval == "month" {
 				presentMRR += convertedAmount
 				fmt.Printf(
 					"Added %f %s to presentMRR\n",
 					convertedAmount,
 					currency,
 				)
-			} else if interval == "yearly" {
+			} else if interval == "year" {
 				presentMRR += convertedAmount / 12
 				fmt.Printf(
 					"Added %f %s to presentMRR\n",
@@ -179,17 +179,18 @@ func main() {
 
 	// convert the currency test
 	fmt.Println(
-		"Converted currency: 100 usd to usd:",
+		"Converted currency: 100 usd to eur:",
 		convertCurrency(
 			100.00,
 			"USD",
 			"EUR",
 		),
+		"eur",
 	)
 
 	// print: Present MRR Net Value: 2230.00 USD
-	fmt.Println(
-		"Present MRR Net Value: ",
+	fmt.Printf(
+		"Present MRR Net Value: %.2f %s\n",
 		presentMRR,
 		currency,
 	)
