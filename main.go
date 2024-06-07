@@ -145,6 +145,7 @@ func main() {
 	existedSubscriptions := make(map[string]bool)
 	previousAmounts := make(map[string]float64)
 	previouslyCancelled := make(map[string]bool)
+	previouslyAmended := make(map[string]bool)
 	for i := 0; i < len(subscriptions); i++ {
 		sub := subscriptions[i]
 		status := sub.Status
@@ -197,7 +198,7 @@ func main() {
 		}
 
 		// Calculate total MRR
-		if (status == "active" || status == "amended") && isExpired == false {
+		if (status == "active" || status == "amended") && isExpired == false && startedAt.Before(todaysDate) {
 			if interval == "month" {
 				presentMRR += convertedAmount
 			} else if interval == "year" {
@@ -222,10 +223,6 @@ func main() {
 				)
 				continue
 			}
-			fmt.Printf(
-				"Cancelled at: %s\n",
-				cancelledAt,
-			)
 			if cancelledAt.After(firstDayOfPreviousMonth) {
 				if interval == "month" {
 					churn += convertedAmount
@@ -239,7 +236,7 @@ func main() {
 		}
 		if status == "active" && isExpired == false && startedAt.After(lastDayOfPreviousMonth) {
 			// Check if the customer has previously cancelled
-			if !previouslyCancelled[sub.Customer_id] {
+			if previouslyCancelled[sub.Customer_id] {
 				if interval == "month" {
 					reactivations += convertedAmount
 				} else if interval == "year" {
@@ -249,7 +246,7 @@ func main() {
 		}
 		if status == "active" && isExpired == false && startedAt.After(
 			lastDayOfPreviousMonth,
-		) && !existedSubscriptions[sub.Customer_id] {
+		) && !previouslyCancelled[sub.Customer_id] {
 			if interval == "month" {
 				newBusiness += convertedAmount
 			} else if interval == "year" {
@@ -259,8 +256,9 @@ func main() {
 		// Upgrades and donwgrades
 		if status == "amended" {
 			previousAmounts[sub.Customer_id] = convertedAmount
+			previouslyAmended[sub.Customer_id] = true
 		}
-		if status == "active" && startedAt.After(lastDayOfPreviousMonth) && isExpired == false {
+		if status == "active" && startedAt.After(lastDayOfPreviousMonth) && isExpired == false && previouslyAmended[sub.Customer_id] {
 			if previousAmounts[sub.Customer_id] < convertedAmount {
 				if interval == "month" {
 					upgrades += convertedAmount - previousAmounts[sub.Customer_id]
@@ -277,16 +275,6 @@ func main() {
 			}
 		}
 
-		fmt.Printf(
-			"Subscription_ID: %s, Customer_ID: %s, Amount: %f, Converted Amount: %.2f, Status: %s, IsExpired: %t, Interval: %s isCancelledREcently: %t \n",
-			sub.Subscription_id,
-			sub.Customer_id,
-			amount,
-			convertedAmount,
-			status,
-			isExpired,
-			interval,
-		)
 	}
 	// print daily MRR
 	// loop the days in a month
@@ -310,7 +298,39 @@ func main() {
 		0,
 		todaysDate.Location(),
 	)
-	fmt.Println("Daily MRR:")
+	fmt.Printf(
+		"Present MRR Net Value: %.2f %s\n",
+		presentMRR,
+		currency,
+	)
+	fmt.Println("Present MRR Breakdown:")
+	fmt.Printf(
+		"- New Business: %.2f %s\n",
+		newBusiness,
+		currency,
+	)
+	fmt.Printf(
+		"- Upgrades: %.2f %s\n",
+		upgrades,
+		currency,
+	)
+	fmt.Printf(
+		"- Downgrades: -%.2f %s\n",
+		downgrades,
+		currency,
+	)
+	fmt.Printf(
+		"- Churn: -%.2f %s\n",
+		churn,
+		currency,
+	)
+	fmt.Printf(
+		"- Reactivations: %.2f %s\n",
+		reactivations,
+		currency,
+	)
+
+	fmt.Println("\n Daily MRR:")
 	fmt.Println("|------------|------------------|")
 	fmt.Printf(
 		"| Date       | MRR Value (%s)  |",
@@ -407,45 +427,6 @@ func main() {
 			"GBP",
 			"USD",
 		),
-	)
-
-	// print: Present MRR Net Value: 2230.00 USD
-	fmt.Printf(
-		"Present MRR Net Value: %.2f %s\n",
-		presentMRR,
-		currency,
-	)
-
-	// print MRR Breakdown
-	fmt.Printf(
-		"New Business: %.2f %s\n",
-		newBusiness,
-		currency,
-	)
-	fmt.Printf(
-		"Upgrades: %.2f %s\n",
-		upgrades,
-		currency,
-	)
-	fmt.Printf(
-		"Downgrades: %.2f %s\n",
-		downgrades,
-		currency,
-	)
-	fmt.Printf(
-		"Churn: %.2f %s\n",
-		churn,
-		currency,
-	)
-	fmt.Printf(
-		"Reactivations: %.2f %s\n",
-		reactivations,
-		currency,
-	)
-	//print first day of previous month
-	fmt.Printf(
-		"First day of previous month: %s\n",
-		firstDayOfPreviousMonth,
 	)
 
 }
