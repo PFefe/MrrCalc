@@ -145,7 +145,6 @@ func main() {
 	existedSubscriptions := make(map[string]bool)
 	previousAmounts := make(map[string]float64)
 	previouslyCancelled := make(map[string]bool)
-	isCancelledRecently := false
 	for i := 0; i < len(subscriptions); i++ {
 		sub := subscriptions[i]
 		status := sub.Status
@@ -198,7 +197,7 @@ func main() {
 		}
 
 		// Calculate total MRR
-		if (status == "active" || status == "amended") && !isExpired && startedAt.After(lastDayOfPreviousMonth) {
+		if (status == "active" || status == "amended") && isExpired == false {
 			if interval == "month" {
 				presentMRR += convertedAmount
 			} else if interval == "year" {
@@ -227,21 +226,20 @@ func main() {
 				"Cancelled at: %s\n",
 				cancelledAt,
 			)
-			if cancelledAt.After(lastDayOfPreviousMonth) {
+			if cancelledAt.After(firstDayOfPreviousMonth) {
 				if interval == "month" {
 					churn += convertedAmount
 				} else if interval == "year" {
 					churn += convertedAmount / 12
 				}
-				isCancelledRecently = true
-			} else {
+			}
+			if cancelledAt.Before(lastDayOfPreviousMonth) {
 				previouslyCancelled[sub.Customer_id] = true
-				isCancelledRecently = false
 			}
 		}
-		if status == "active" && !isExpired && startedAt.After(lastDayOfPreviousMonth) {
+		if status == "active" && isExpired == false && startedAt.After(lastDayOfPreviousMonth) {
 			// Check if the customer has previously cancelled
-			if previouslyCancelled[sub.Customer_id] {
+			if !previouslyCancelled[sub.Customer_id] {
 				if interval == "month" {
 					reactivations += convertedAmount
 				} else if interval == "year" {
@@ -249,7 +247,9 @@ func main() {
 				}
 			}
 		}
-		if status == "active" && !isExpired && startedAt.After(lastDayOfPreviousMonth) && !existedSubscriptions[sub.Customer_id] {
+		if status == "active" && isExpired == false && startedAt.After(
+			lastDayOfPreviousMonth,
+		) && !existedSubscriptions[sub.Customer_id] {
 			if interval == "month" {
 				newBusiness += convertedAmount
 			} else if interval == "year" {
@@ -257,7 +257,10 @@ func main() {
 			}
 		}
 		// Upgrades and donwgrades
-		if status == "amended" && startedAt.After(lastDayOfPreviousMonth) {
+		if status == "amended" {
+			previousAmounts[sub.Customer_id] = convertedAmount
+		}
+		if status == "active" && startedAt.After(lastDayOfPreviousMonth) && isExpired == false {
 			if previousAmounts[sub.Customer_id] < convertedAmount {
 				if interval == "month" {
 					upgrades += convertedAmount - previousAmounts[sub.Customer_id]
@@ -283,9 +286,110 @@ func main() {
 			status,
 			isExpired,
 			interval,
-			isCancelledRecently,
 		)
 	}
+	// print daily MRR
+	// loop the days in a month
+	periodStartAt := time.Date(
+		todaysDate.Year(),
+		time.Month(period),
+		1,
+		0,
+		0,
+		0,
+		0,
+		todaysDate.Location(),
+	)
+	periodEndsAt := time.Date(
+		todaysDate.Year(),
+		time.Month(period+1),
+		1,
+		0,
+		0,
+		0,
+		0,
+		todaysDate.Location(),
+	)
+	fmt.Println("Daily MRR:")
+	fmt.Println("|------------|------------------|")
+	fmt.Printf(
+		"| Date       | MRR Value (%s)  |",
+		currency,
+	)
+	fmt.Println("\n|------------|------------------|")
+	for periodStartAt.Before(periodEndsAt) {
+		dailyMRR := 0.00
+		for i := 0; i < len(subscriptions); i++ {
+			sub := subscriptions[i]
+			status := sub.Status
+			interval := sub.Interval
+			isExpiredAt := false
+			if sub.End_at != nil && *sub.End_at != "" {
+				endAt, err := time.Parse(
+					time.RFC3339,
+					*sub.End_at,
+				)
+				if err != nil {
+					fmt.Printf(
+						"Error parsing the end date for subscription %s: %v\n",
+						sub.Subscription_id,
+						err,
+					)
+					continue
+				}
+				isExpiredAt = endAt.Before(periodStartAt)
+			}
+
+			amount, err := strconv.ParseFloat(
+				sub.Amount,
+				64,
+			)
+			if err != nil {
+				fmt.Printf(
+					"Error parsing amount: %v\n",
+					err,
+				)
+				continue
+			}
+
+			convertedAmount := convertCurrency(
+				amount,
+				sub.Currency,
+				currency,
+			)
+			startedAt, err := time.Parse(
+				time.RFC3339,
+				sub.Start_at,
+			)
+			if err != nil {
+				fmt.Printf(
+					"Error parsing the start date for subscription %s: %v\n",
+					sub.Subscription_id,
+					err,
+				)
+				continue
+			}
+			if (status == "active" || status == "amended") && isExpiredAt == false && startedAt.Before(periodStartAt) {
+				if interval == "month" {
+					dailyMRR += convertedAmount
+				} else if interval == "year" {
+					dailyMRR += convertedAmount / 12
+				}
+			}
+		}
+		fmt.Printf(
+			"| %s |     %.2f     | \n",
+			periodStartAt.Format("2006-01-02"),
+			dailyMRR,
+		)
+		periodStartAt = periodStartAt.AddDate(
+			0,
+			0,
+			1,
+		)
+
+	}
+	fmt.Println("|------------|------------------|")
 
 	// convert the currency test
 	fmt.Printf(
