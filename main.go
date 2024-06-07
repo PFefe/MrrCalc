@@ -398,7 +398,7 @@ func main() {
 			}
 		}
 		fmt.Printf(
-			"| %s |     %.2f      | \n",
+			"| %s |     %.2f       | \n",
 			periodStartAt.Format("2006-01-02"),
 			dailyMRR,
 		)
