@@ -48,7 +48,6 @@ func convertCurrency(amount float64, from string, to string) float64 {
 			),
 		)
 	}
-
 	return rate * amount
 }
 
