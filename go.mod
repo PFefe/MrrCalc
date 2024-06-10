@@ -2,7 +2,10 @@ module MrrCalc
 
 go 1.22
 
-require github.com/yusufthedragon/exchange-rates-go v1.0.0
+require (
+	github.com/shopspring/decimal v1.4.0
+	github.com/yusufthedragon/exchange-rates-go v1.0.0
+)
 
 require (
 	github.com/go-playground/locales v0.13.0 // indirect
