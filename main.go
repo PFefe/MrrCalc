@@ -32,7 +32,7 @@ type Subscription struct {
 	Cancelled_at    *string `json:"cancelled_at"`
 }
 
-func convertCurrency(amount float64, from string, to string) float64 {
+func convertCurrency(amount float64, from string, to string) (float64, error) {
 	var rate, err = exchangerates.ConvertCurrency(
 		&exchangerates.RequestParameter{
 			From:  from,
@@ -42,17 +42,16 @@ func convertCurrency(amount float64, from string, to string) float64 {
 	)
 
 	if err != nil {
-		panic(
-			fmt.Errorf(
-				"error converting currency: %v",
-				err.Error,
-			),
+		fmt.Errorf(
+			"Error converting currency: %v\n",
+			err,
 		)
+		return 0, err
 	}
-	return rate * amount
+	return rate * amount, nil
 }
 
-func parseToFloat(value string) float64 {
+func parseToFloat(value string) (float64, error) {
 	amount, err := strconv.ParseFloat(
 		value,
 		64,
@@ -63,10 +62,10 @@ func parseToFloat(value string) float64 {
 			err,
 		)
 	}
-	return amount
+	return amount, nil
 }
 
-func parseToTime(value string) time.Time {
+func parseToTime(value string) (time.Time, error) {
 	date, err := time.Parse(
 		time.RFC3339,
 		value,
@@ -77,10 +76,10 @@ func parseToTime(value string) time.Time {
 			err,
 		)
 	}
-	return date
+	return date, nil
 }
 
-func readJsonFileAndUnmarshall(path string) []Subscription {
+func readJsonFileAndUnmarshall(path string) ([]Subscription, error) {
 	// Open our jsonFile
 	jsonFile, err := os.Open(path)
 	// if the os.Open returns an error then handle it
@@ -115,33 +114,11 @@ func readJsonFileAndUnmarshall(path string) []Subscription {
 			err,
 		)
 	}
-	return subscriptions
+	return subscriptions, nil
 }
 
-func main() {
-	flag.StringVar(
-		&currency,
-		"currency",
-		"USD",
-		"please enter the currency",
-	)
-	flag.IntVar(
-		&period,
-		"period",
-		1,
-		"please enter the period",
-	)
-	flag.StringVar(
-		&input,
-		"input",
-		"subscriptions.json",
-		"please enter the path to the json file",
-	)
-	flag.Parse()
-
-	subscriptions := readJsonFileAndUnmarshall(input)
-
-	// Calculate Present MRR Net Value:
+func calculateMRR(subscriptions []Subscription, currency string) (
+	decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal) {
 	todaysDate := time.Now()
 	previousMonth := todaysDate.AddDate(
 		0,
@@ -184,26 +161,27 @@ func main() {
 		isExpired := false
 
 		if sub.End_at != nil && *sub.End_at != "" {
-			endAt := parseToTime(*sub.End_at)
+			endAt, _ := parseToTime(*sub.End_at)
 			isExpired = endAt.Before(todaysDate)
 		}
 
-		amount := parseToFloat(sub.Amount)
+		amount, _ := parseToFloat(sub.Amount)
 
+		value, _ := convertCurrency(
+			amount,
+			sub.Currency,
+			currency,
+		)
 		convertedAmount := decimal.NewFromFloat(
-			convertCurrency(
-				amount,
-				sub.Currency,
-				currency,
-			),
+			value,
 		)
 
-		startedAt := parseToTime(sub.Start_at)
+		startedAt, _:= parseToTime(sub.Start_at)
 
 		switch status {
 		case "cancelled":
 			if sub.Cancelled_at != nil {
-				cancelledAt := parseToTime(*sub.Cancelled_at)
+				cancelledAt, _ := parseToTime(*sub.Cancelled_at)
 
 				if cancelledAt.After(firstDayOfPreviousMonth) {
 					if interval == "month" {
@@ -273,40 +251,11 @@ func main() {
 			}
 		}
 	}
-	fmt.Printf(
-		"Present MRR Net Value: %s %s\n",
-		presentMRR.StringFixed(2),
-		currency,
-	)
-	fmt.Println("Present MRR Breakdown:")
-	fmt.Printf(
-		"- New Business: %s %s\n",
-		newBusiness.StringFixed(2),
-		currency,
-	)
-	fmt.Printf(
-		"- Upgrades: %s %s\n",
-		upgrades.StringFixed(2),
-		currency,
-	)
-	fmt.Printf(
-		"- Downgrades: -%s %s\n",
-		downgrades.StringFixed(2),
-		currency,
-	)
-	fmt.Printf(
-		"- Churn: -%s %s\n",
-		churn.StringFixed(2),
-		currency,
-	)
-	fmt.Printf(
-		"- Reactivations: %s %s\n",
-		reactivations.StringFixed(2),
-		currency,
-	)
+	return presentMRR, newBusiness, upgrades, downgrades, churn, reactivations
+}
 
-	// print daily MRR report
-	// loop the days in a month/period
+func calculateDailyMRR(subscriptions []Subscription, currency string, period int){
+	todaysDate := time.Now()
 	periodStartAt := time.Date(
 		todaysDate.Year(),
 		time.Month(period),
@@ -344,21 +293,22 @@ func main() {
 			isExpiredAt := false
 
 			if sub.End_at != nil && *sub.End_at != "" {
-				endAt := parseToTime(*sub.End_at)
+				endAt, _ := parseToTime(*sub.End_at)
 				isExpiredAt = endAt.Before(periodStartAt)
 			}
 
-			amount := parseToFloat(sub.Amount)
+			amount, _ := parseToFloat(sub.Amount)
 
+			value, _ := convertCurrency(
+				amount,
+				sub.Currency,
+				currency,
+			)
 			convertedAmount := decimal.NewFromFloat(
-				convertCurrency(
-					amount,
-					sub.Currency,
-					currency,
-				),
+				value,
 			)
 
-			startedAt := parseToTime(sub.Start_at)
+			startedAt, _ := parseToTime(sub.Start_at)
 
 			if (status == "active" || status == "amended") && isExpiredAt == false && startedAt.Before(periodStartAt) {
 				if interval == "month" {
@@ -380,4 +330,66 @@ func main() {
 		)
 	}
 	fmt.Println("|------------|------------------|")
+}
+
+func main() {
+	flag.StringVar(
+		&currency,
+		"currency",
+		"USD",
+		"Currency code",
+	)
+	flag.IntVar(
+		&period,
+		"period",
+		1,
+		"period",
+	)
+	flag.StringVar(
+		&input,
+		"input",
+		"subscriptions.json",
+		"Path to subscriptions json file",
+	)
+	flag.Parse()
+
+	subscriptions, _ := readJsonFileAndUnmarshall(input)
+	presentMRR, newBusiness, upgrades, downgrades, churn, reactivations := calculateMRR(subscriptions, currency)
+	fmt.Printf(
+		"Present MRR Net Value: %s %s\n",
+		presentMRR.StringFixed(2),
+		currency,
+	)
+	fmt.Println("Present MRR Breakdown:")
+	fmt.Printf(
+		"- New Business: %s %s\n",
+		newBusiness.StringFixed(2),
+		currency,
+	)
+	fmt.Printf(
+		"- Upgrades: %s %s\n",
+		upgrades.StringFixed(2),
+		currency,
+	)
+	fmt.Printf(
+		"- Downgrades: -%s %s\n",
+		downgrades.StringFixed(2),
+		currency,
+	)
+	fmt.Printf(
+		"- Churn: -%s %s\n",
+		churn.StringFixed(2),
+		currency,
+	)
+	fmt.Printf(
+		"- Reactivations: %s %s\n",
+		reactivations.StringFixed(2),
+		currency,
+	)
+
+	calculateDailyMRR(subscriptions, currency, period)
+	gbpToUsd, _ := convertCurrency(1.00 , "GBP", "USD")
+	fmt.Println("GBP to USD rate: ", gbpToUsd)
+	eurToUsd, _ := convertCurrency(1.00, "EUR", "USD")
+	fmt.Println("EUR to USD rate: ", eurToUsd)
 }
