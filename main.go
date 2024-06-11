@@ -222,7 +222,7 @@ func calculateMRR(subscriptions []Subscription, currency string) (
 						}
 					}
 					// Calculate new business
-					if !previouslyCancelled[sub.Customer_id] {
+					if !previouslyCancelled[sub.Customer_id] && !previouslyAmended[sub.Customer_id] {
 						if interval == "month" {
 							newBusiness = newBusiness.Add(convertedAmount)
 						} else if interval == "year" {

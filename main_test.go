@@ -40,6 +40,8 @@ func TestCalculateMRR(t *testing.T) {
 		today := time.Now()
 		firstDayOfMonth := time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
 		formattedFirstDay := firstDayOfMonth.Format(time.RFC3339)
+		//secondDayOfMonth := time.Date(today.Year(), today.Month(), 2, 0, 0, 0, 0, today.Location())
+		//formattedsecondDay := firstDayOfMonth.Format(time.RFC3339)
 		firstDayOfTheYear := time.Date(time.Now().Year(), 1, 1, 0, 0, 0, 0, time.Now().Location())
 		formattedFirstDayOfTheYear := firstDayOfTheYear.Format(time.RFC3339)
 		firstDayOfPreviousMonth := time.Date(today.Year(), today.Month()-1, 2, 0, 0, 0, 0, today.Location())
@@ -101,9 +103,53 @@ func TestCalculateMRR(t *testing.T) {
 				"interval": "month",
 				"status": "active",
 				"cancelled_at": null
-			}
+			},
+  			{
+  			  "subscription_id": "sub_006",
+  			  "customer_id": "cust_005",
+  			  "start_at": "%s",
+  			  "end_at": null,
+  			  "amount": "75.00",
+  			  "currency": "USD",
+  			  "interval": "month",
+  			  "status": "amended",
+  			  "cancelled_at": null
+  			},
+  			{
+  			  "subscription_id": "sub_007",
+  			  "customer_id": "cust_005",
+  			  "start_at": "%s",
+  			  "end_at": null,
+  			  "amount": "100.00",
+  			  "currency": "USD",
+  			  "interval": "month",
+  			  "status": "active",
+  			  "cancelled_at": null
+  			},
+  			{
+  			  "subscription_id": "sub_008",
+  			  "customer_id": "cust_006",
+  			  "start_at": "%s",
+  			  "end_at": null,
+  			  "amount": "100.00",
+  			  "currency": "USD",
+  			  "interval": "month",
+  			  "status": "amended",
+  			  "cancelled_at": null
+  			},
+  			{
+  			  "subscription_id": "sub_09",
+  			  "customer_id": "cust_006",
+  			  "start_at": "%s",
+  			  "end_at": null,
+  			  "amount": "50.00",
+  			  "currency": "USD",
+  			  "interval": "month",
+  			  "status": "active",
+  			  "cancelled_at": null
+  			}
 
-		]`, formattedFirstDayOfTheYear, formattedFirstDayOfTheYear, formattedFirstDay, formattedFirstDayOfTheYear, formattedFirstDayOfPreviousMonth, formattedFirstDay)
+		]`, formattedFirstDayOfTheYear, formattedFirstDayOfTheYear, formattedFirstDay, formattedFirstDayOfTheYear, formattedFirstDayOfPreviousMonth, formattedFirstDay, formattedFirstDayOfTheYear, formattedFirstDay, formattedFirstDayOfTheYear, formattedFirstDay,)
 
 		var subscriptions []Subscription
 		err := json.Unmarshal([]byte(subscriptionsJSON), &subscriptions)
@@ -112,10 +158,10 @@ func TestCalculateMRR(t *testing.T) {
 		}
 
 		// Test case 1
-		expectedPresentMRR := decimal.NewFromFloat(700.00)
+		expectedPresentMRR := decimal.NewFromFloat(850.00)
 		expectedNewBusiness := decimal.NewFromFloat(300.00)
-		expectedUpgrades := decimal.NewFromFloat(.0)
-		expectedDowngrades := decimal.NewFromFloat(.0)
+		expectedUpgrades := decimal.NewFromFloat(25.0)
+		expectedDowngrades := decimal.NewFromFloat(50.0)
 		expectedChurn := decimal.NewFromFloat(400.0)
 		expectedReactivations := decimal.NewFromFloat(100.0)
 		presentMRR, newBusiness, upgrades, downgrades, churn, reactivations := calculateMRR(subscriptions, "USD")
