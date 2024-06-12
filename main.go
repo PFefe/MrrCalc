@@ -52,29 +52,19 @@ func convertCurrency(amount float64, from string, to string) (float64, error) {
 }
 
 func parseToFloat(value string) (float64, error) {
-	amount, err := strconv.ParseFloat(
-		value,
-		64,
-	)
+	amount, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		fmt.Printf(
-			"Error parsing amount: %v\n",
-			err,
-		)
+		fmt.Printf("Error parsing amount: %v\n", err)
+		return 0, err
 	}
 	return amount, nil
 }
 
 func parseToTime(value string) (time.Time, error) {
-	date, err := time.Parse(
-		time.RFC3339,
-		value,
-	)
+	date, err := time.Parse(time.RFC3339, value)
 	if err != nil {
-		fmt.Printf(
-			"Error parsing time: %v\n",
-			err,
-		)
+		fmt.Printf("Error parsing time: %v\n", err)
+		return time.Time{}, err // Return zero time on error
 	}
 	return date, nil
 }
@@ -98,7 +88,10 @@ func readJsonFileAndUnmarshall(path string) ([]Subscription, error) {
 		}
 	}(jsonFile)
 	// read opened jSon
-	read, _ := io.ReadAll(jsonFile)
+	read, err := io.ReadAll(jsonFile)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read the JSON file: %v", err)
+	}
 
 	// initialize  Subscriptions array
 	var subscriptions []Subscription
@@ -253,8 +246,12 @@ func calculateMRR(subscriptions []Subscription, currency string) (
 	}
 	return presentMRR, newBusiness, upgrades, downgrades, churn, reactivations
 }
+type DailyMRR struct {
+	Date string
+	MRR  string
+}
 
-func calculateDailyMRR(subscriptions []Subscription, currency string, period int){
+func calculateDailyMRR(subscriptions []Subscription, currency string, period int)([]DailyMRR, error){
 	todaysDate := time.Now()
 	periodStartAt := time.Date(
 		todaysDate.Year(),
@@ -277,13 +274,8 @@ func calculateDailyMRR(subscriptions []Subscription, currency string, period int
 		todaysDate.Location(),
 	)
 
-	fmt.Println("\n Daily MRR:")
-	fmt.Println("|------------|------------------|")
-	fmt.Printf(
-		"| Date       | MRR Value (%s)  |",
-		currency,
-	)
-	fmt.Println("\n|------------|------------------|")
+	var dailyMRRs []DailyMRR
+
 	for periodStartAt.Before(periodEndsAt) {
 		dailyMRR := decimal.NewFromFloat(.0)
 		for i := 0; i < len(subscriptions); i++ {
@@ -318,18 +310,37 @@ func calculateDailyMRR(subscriptions []Subscription, currency string, period int
 				}
 			}
 		}
-		fmt.Printf(
-			"| %s |     %s       | \n",
-			periodStartAt.Format("2006-01-02"),
-			dailyMRR.StringFixed(2),
-		)
+		dailyMRRs = append(dailyMRRs, DailyMRR{
+			Date: periodStartAt.Format("2006-01-02"),
+			MRR:  dailyMRR.StringFixed(2),
+		})
+
 		periodStartAt = periodStartAt.AddDate(
 			0,
 			0,
 			1,
 		)
 	}
+	// Printing the daily MRR values
+	fmt.Println("\n Daily MRR:")
 	fmt.Println("|------------|------------------|")
+	fmt.Printf(
+		"| Date       | MRR Value (%s)  |\n",
+		currency,
+	)
+	fmt.Println("|------------|------------------|")
+	for _, dailyMRR := range dailyMRRs {
+		fmt.Printf(
+			"| %s |     %s       |\n",
+			dailyMRR.Date,
+			dailyMRR.MRR,
+		)
+	}
+
+	fmt.Println("|------------|------------------|")
+
+	return dailyMRRs, nil
+
 }
 
 func main() {
@@ -389,7 +400,7 @@ func main() {
 
 	calculateDailyMRR(subscriptions, currency, period)
 	gbpToUsd, _ := convertCurrency(1.00 , "GBP", "USD")
-	fmt.Println("GBP to USD rate: ", gbpToUsd)
+	fmt.Printf("GBP to USD rate: %.2f \n", gbpToUsd)
 	eurToUsd, _ := convertCurrency(1.00, "EUR", "USD")
-	fmt.Println("EUR to USD rate: ", eurToUsd)
+	fmt.Printf("EUR to USD rate: %.2f \n", eurToUsd)
 }
