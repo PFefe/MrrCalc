@@ -232,7 +232,7 @@ func TestCalculateMRR(t *testing.T) {
 }
 func TestDailyMRR(t *testing.T) {
 	t.Run("check if dailyMRR is not null and not giving error", func(t *testing.T) {
-		subscriptions, _ := readJsonFileAndUnmarshall("subscriptions_usd.json")
+		subscriptions, _ := readJsonFileAndUnmarshall("subscriptions.json")
 		result, err := calculateDailyMRR(subscriptions, "USD", 1)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
