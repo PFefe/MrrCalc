@@ -1,14 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/shopspring/decimal"
-	exchangerates "github.com/yusufthedragon/exchange-rates-go"
-	"io"
-	"os"
-	"strconv"
 	"time"
 )
 
@@ -30,84 +25,6 @@ type Subscription struct {
 	Interval        string  `json:"interval"`
 	Status          string  `json:"status"`
 	Cancelled_at    *string `json:"cancelled_at"`
-}
-
-func convertCurrency(amount float64, from string, to string) (float64, error) {
-	var rate, err = exchangerates.ConvertCurrency(
-		&exchangerates.RequestParameter{
-			From:  from,
-			To:    to,
-			Value: 1,
-		},
-	)
-
-	if err != nil {
-		fmt.Errorf(
-			"Error converting currency: %v\n",
-			err,
-		)
-		return 0, err
-	}
-	return rate * amount, nil
-}
-
-func parseToFloat(value string) (float64, error) {
-	amount, err := strconv.ParseFloat(value, 64)
-	if err != nil {
-		fmt.Printf("Error parsing amount: %v\n", err)
-		return 0, err
-	}
-	return amount, nil
-}
-
-func parseToTime(value string) (time.Time, error) {
-	date, err := time.Parse(time.RFC3339, value)
-	if err != nil {
-		fmt.Printf("Error parsing time: %v\n", err)
-		return time.Time{}, err // Return zero time on error
-	}
-	return date, nil
-}
-
-func readJsonFileAndUnmarshall(path string) ([]Subscription, error) {
-	// Open our jsonFile
-	jsonFile, err := os.Open(path)
-	// if the os.Open returns an error then handle it
-	if err != nil {
-		fmt.Printf(
-			"Unable to read the file %v",
-			err,
-		)
-	}
-	fmt.Println("Json file read success")
-	// defer the closing jsonFile
-	defer func(jsonFile *os.File) {
-		err := jsonFile.Close()
-		if err != nil {
-
-		}
-	}(jsonFile)
-	// read opened jSon
-	read, err := io.ReadAll(jsonFile)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read the JSON file: %v", err)
-	}
-
-	// initialize  Subscriptions array
-	var subscriptions []Subscription
-
-	// unmarshal byteArray into 'subscriptions'
-	err = json.Unmarshal(
-		read,
-		&subscriptions,
-	)
-	if err != nil {
-		fmt.Printf(
-			"Unable to unmarshal the json file %v",
-			err,
-		)
-	}
-	return subscriptions, nil
 }
 
 func calculateMRR(subscriptions []Subscription, currency string) (
@@ -169,7 +86,7 @@ func calculateMRR(subscriptions []Subscription, currency string) (
 			value,
 		)
 
-		startedAt, _:= parseToTime(sub.Start_at)
+		startedAt, _ := parseToTime(sub.Start_at)
 
 		switch status {
 		case "cancelled":
@@ -246,12 +163,13 @@ func calculateMRR(subscriptions []Subscription, currency string) (
 	}
 	return presentMRR, newBusiness, upgrades, downgrades, churn, reactivations
 }
+
 type DailyMRR struct {
 	Date string
 	MRR  string
 }
 
-func calculateDailyMRR(subscriptions []Subscription, currency string, period int)([]DailyMRR, error){
+func calculateDailyMRR(subscriptions []Subscription, currency string, period int) ([]DailyMRR, error) {
 	todaysDate := time.Now()
 	periodStartAt := time.Date(
 		todaysDate.Year(),
@@ -310,10 +228,13 @@ func calculateDailyMRR(subscriptions []Subscription, currency string, period int
 				}
 			}
 		}
-		dailyMRRs = append(dailyMRRs, DailyMRR{
-			Date: periodStartAt.Format("2006-01-02"),
-			MRR:  dailyMRR.StringFixed(2),
-		})
+		dailyMRRs = append(
+			dailyMRRs,
+			DailyMRR{
+				Date: periodStartAt.Format("2006-01-02"),
+				MRR:  dailyMRR.StringFixed(2),
+			},
+		)
 
 		periodStartAt = periodStartAt.AddDate(
 			0,
@@ -365,7 +286,10 @@ func main() {
 	flag.Parse()
 
 	subscriptions, _ := readJsonFileAndUnmarshall(input)
-	presentMRR, newBusiness, upgrades, downgrades, churn, reactivations := calculateMRR(subscriptions, currency)
+	presentMRR, newBusiness, upgrades, downgrades, churn, reactivations := calculateMRR(
+		subscriptions,
+		currency,
+	)
 	fmt.Printf(
 		"Present MRR Net Value: %s %s\n",
 		presentMRR.StringFixed(2),
@@ -398,9 +322,27 @@ func main() {
 		currency,
 	)
 
-	calculateDailyMRR(subscriptions, currency, period)
-	gbpToUsd, _ := convertCurrency(1.00 , "GBP", "USD")
-	fmt.Printf("GBP to USD rate: %.2f \n", gbpToUsd)
-	eurToUsd, _ := convertCurrency(1.00, "EUR", "USD")
-	fmt.Printf("EUR to USD rate: %.2f \n", eurToUsd)
+	calculateDailyMRR(
+		subscriptions,
+		currency,
+		period,
+	)
+	gbpToUsd, _ := convertCurrency(
+		1.00,
+		"GBP",
+		"USD",
+	)
+	fmt.Printf(
+		"GBP to USD rate: %.2f \n",
+		gbpToUsd,
+	)
+	eurToUsd, _ := convertCurrency(
+		1.00,
+		"EUR",
+		"USD",
+	)
+	fmt.Printf(
+		"EUR to USD rate: %.2f \n",
+		eurToUsd,
+	)
 }
