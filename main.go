@@ -1,10 +1,10 @@
 package main
 
 import (
+	"MrrCalc/pkg/currencies"
+	"MrrCalc/pkg/myTools"
 	"flag"
 	"fmt"
-	"github.com/shopspring/decimal"
-	"time"
 )
 
 var (
@@ -12,257 +12,6 @@ var (
 	period   int
 	input    string
 )
-
-// Subscription struct which contains required fields
-
-type Subscription struct {
-	Subscription_id string  `json:"subscription_id"`
-	Customer_id     string  `json:"customer_id"`
-	Start_at        string  `json:"start_at"`
-	End_at          *string `json:"end_at"`
-	Amount          string  `json:"amount"`
-	Currency        string  `json:"currency"`
-	Interval        string  `json:"interval"`
-	Status          string  `json:"status"`
-	Cancelled_at    *string `json:"cancelled_at"`
-}
-
-func calculateMRR(subscriptions []Subscription, currency string) (
-	decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal) {
-	todaysDate := time.Now()
-	previousMonth := todaysDate.AddDate(
-		0,
-		-1,
-		0,
-	)
-	lastDayOfPreviousMonth := time.Date(
-		previousMonth.Year(),
-		previousMonth.Month(),
-		previousMonth.Day(),
-		23,
-		59,
-		50,
-		0,
-		previousMonth.Location(),
-	)
-	firstDayOfPreviousMonth := time.Date(
-		previousMonth.Year(),
-		previousMonth.Month(),
-		1,
-		0,
-		0,
-		0,
-		1,
-		previousMonth.Location(),
-	)
-	presentMRR := decimal.NewFromFloat(.0)
-	newBusiness := decimal.NewFromFloat(.0)
-	upgrades := decimal.NewFromFloat(.0)
-	downgrades := decimal.NewFromFloat(.0)
-	churn := decimal.NewFromFloat(.0)
-	reactivations := decimal.NewFromFloat(.0)
-	previousAmounts := make(map[string]decimal.Decimal)
-	previouslyCancelled := make(map[string]bool)
-	previouslyAmended := make(map[string]bool)
-	for i := 0; i < len(subscriptions); i++ {
-		sub := subscriptions[i]
-		status := sub.Status
-		interval := sub.Interval
-		isExpired := false
-
-		if sub.End_at != nil && *sub.End_at != "" {
-			endAt, _ := parseToTime(*sub.End_at)
-			isExpired = endAt.Before(todaysDate)
-		}
-
-		amount, _ := parseToFloat(sub.Amount)
-
-		value, _ := convertCurrency(
-			amount,
-			sub.Currency,
-			currency,
-		)
-		convertedAmount := decimal.NewFromFloat(
-			value,
-		)
-
-		startedAt, _ := parseToTime(sub.Start_at)
-
-		switch status {
-		case "cancelled":
-			if sub.Cancelled_at != nil {
-				cancelledAt, _ := parseToTime(*sub.Cancelled_at)
-
-				if cancelledAt.After(firstDayOfPreviousMonth) {
-					if interval == "month" {
-						churn = churn.Add(convertedAmount)
-					} else if interval == "year" {
-						churn = churn.Add(convertedAmount.Div(decimal.NewFromInt(12)))
-					}
-				}
-				if cancelledAt.Before(lastDayOfPreviousMonth) {
-					previouslyCancelled[sub.Customer_id] = true
-				}
-			}
-
-		case "amended":
-			if startedAt.Before(lastDayOfPreviousMonth) {
-				previouslyAmended[sub.Customer_id] = true
-				previousAmounts[sub.Customer_id] = convertedAmount
-			}
-
-		case "active":
-			if isExpired == false {
-				// Calculate total MRR
-				if startedAt.Before(todaysDate) {
-					if interval == "month" {
-						presentMRR = presentMRR.Add(convertedAmount)
-					} else if interval == "year" {
-						presentMRR = presentMRR.Add(convertedAmount.Div(decimal.NewFromInt(12)))
-					}
-				}
-				if startedAt.After(lastDayOfPreviousMonth) {
-					// Check if the customer has previously cancelled
-					// Calculate reactivations
-					if previouslyCancelled[sub.Customer_id] {
-						if interval == "month" {
-							reactivations = reactivations.Add(convertedAmount)
-						} else if interval == "year" {
-							reactivations = reactivations.Add(convertedAmount.Div(decimal.NewFromInt(12)))
-						}
-					}
-					// Calculate new business
-					if !previouslyCancelled[sub.Customer_id] && !previouslyAmended[sub.Customer_id] {
-						if interval == "month" {
-							newBusiness = newBusiness.Add(convertedAmount)
-						} else if interval == "year" {
-							newBusiness = newBusiness.Add(convertedAmount.Div(decimal.NewFromInt(12)))
-						}
-					}
-					// Calculate upgrades and downgrades
-					if previouslyAmended[sub.Customer_id] {
-						prevAmount := previousAmounts[sub.Customer_id]
-						if prevAmount.LessThan(convertedAmount) {
-							if interval == "month" {
-								upgrades = upgrades.Add(convertedAmount.Sub(prevAmount))
-							} else if interval == "year" {
-								upgrades = upgrades.Add(convertedAmount.Sub(prevAmount).Div(decimal.NewFromInt(12)))
-							}
-						}
-						if prevAmount.GreaterThan(convertedAmount) {
-							if interval == "month" {
-								downgrades = downgrades.Add(prevAmount.Sub(convertedAmount))
-							} else if interval == "year" {
-								downgrades = downgrades.Add(prevAmount.Sub(convertedAmount).Div(decimal.NewFromInt(12)))
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return presentMRR, newBusiness, upgrades, downgrades, churn, reactivations
-}
-
-type DailyMRR struct {
-	Date string
-	MRR  string
-}
-
-func calculateDailyMRR(subscriptions []Subscription, currency string, period int) ([]DailyMRR, error) {
-	todaysDate := time.Now()
-	periodStartAt := time.Date(
-		todaysDate.Year(),
-		time.Month(period),
-		1,
-		0,
-		0,
-		0,
-		0,
-		todaysDate.Location(),
-	)
-	periodEndsAt := time.Date(
-		todaysDate.Year(),
-		time.Month(period+1),
-		1,
-		0,
-		0,
-		0,
-		0,
-		todaysDate.Location(),
-	)
-
-	var dailyMRRs []DailyMRR
-
-	for periodStartAt.Before(periodEndsAt) {
-		dailyMRR := decimal.NewFromFloat(.0)
-		for i := 0; i < len(subscriptions); i++ {
-			sub := subscriptions[i]
-			status := sub.Status
-			interval := sub.Interval
-			isExpiredAt := false
-
-			if sub.End_at != nil && *sub.End_at != "" {
-				endAt, _ := parseToTime(*sub.End_at)
-				isExpiredAt = endAt.Before(periodStartAt)
-			}
-
-			amount, _ := parseToFloat(sub.Amount)
-
-			value, _ := convertCurrency(
-				amount,
-				sub.Currency,
-				currency,
-			)
-			convertedAmount := decimal.NewFromFloat(
-				value,
-			)
-
-			startedAt, _ := parseToTime(sub.Start_at)
-
-			if (status == "active" || status == "amended") && isExpiredAt == false && startedAt.Before(periodStartAt) {
-				if interval == "month" {
-					dailyMRR = dailyMRR.Add(convertedAmount)
-				} else if interval == "year" {
-					dailyMRR = dailyMRR.Add(convertedAmount.Div(decimal.NewFromInt(12)))
-				}
-			}
-		}
-		dailyMRRs = append(
-			dailyMRRs,
-			DailyMRR{
-				Date: periodStartAt.Format("2006-01-02"),
-				MRR:  dailyMRR.StringFixed(2),
-			},
-		)
-
-		periodStartAt = periodStartAt.AddDate(
-			0,
-			0,
-			1,
-		)
-	}
-	// Printing the daily MRR values
-	fmt.Println("\n Daily MRR:")
-	fmt.Println("|------------|------------------|")
-	fmt.Printf(
-		"| Date       | MRR Value (%s)  |\n",
-		currency,
-	)
-	fmt.Println("|------------|------------------|")
-	for _, dailyMRR := range dailyMRRs {
-		fmt.Printf(
-			"| %s |     %s       |\n",
-			dailyMRR.Date,
-			dailyMRR.MRR,
-		)
-	}
-
-	fmt.Println("|------------|------------------|")
-
-	return dailyMRRs, nil
-
-}
 
 func main() {
 	flag.StringVar(
@@ -285,7 +34,21 @@ func main() {
 	)
 	flag.Parse()
 
-	subscriptions, _ := readJsonFileAndUnmarshall(input)
+	subscriptions, err := myTools.ReadJsonFileAndUnmarshall(input)
+	if err != nil {
+		fmt.Printf(
+			"Error reading and unmarshalling the file: %v\n",
+			err,
+		)
+		return
+	}
+	/*	fmt.Println("Json file read success")
+		for _, sub := range subscriptions {
+			fmt.Printf(
+				"%+v\n",
+				sub,
+			)
+		}*/
 	presentMRR, newBusiness, upgrades, downgrades, churn, reactivations := calculateMRR(
 		subscriptions,
 		currency,
@@ -322,24 +85,53 @@ func main() {
 		currency,
 	)
 
-	calculateDailyMRR(
+	dailyMRRs, err := calculateDailyMRR(
 		subscriptions,
 		currency,
 		period,
 	)
-	gbpToUsd, _ := convertCurrency(
-		1.00,
-		"GBP",
-		"USD",
+	if err != nil {
+		fmt.Printf(
+			"Error calculating daily MRR: %v\n",
+			err,
+		)
+		return
+	}
+
+	// Printing the daily MRR values
+	fmt.Println("\n Daily MRR:")
+	fmt.Println("|------------|------------------|")
+	fmt.Printf(
+		"| Date       | MRR Value (%s)  |\n",
+		currency,
+	)
+	fmt.Println("|------------|------------------|")
+	for _, dailyMRR := range dailyMRRs {
+		fmt.Printf(
+			"| %s |     %s       |\n",
+			dailyMRR.Date,
+			dailyMRR.MRR.StringFixed(2),
+		)
+	}
+	fmt.Println("|------------|------------------|")
+
+	gbpToUsd, _ := currencies.ConvertCurrency(
+		&currencies.Currency{
+			From:   "GBP",
+			To:     "USD",
+			Amount: 1.00,
+		},
 	)
 	fmt.Printf(
 		"GBP to USD rate: %.2f \n",
 		gbpToUsd,
 	)
-	eurToUsd, _ := convertCurrency(
-		1.00,
-		"EUR",
-		"USD",
+	eurToUsd, _ := currencies.ConvertCurrency(
+		&currencies.Currency{
+			From:   "EUR",
+			To:     "USD",
+			Amount: 1.00,
+		},
 	)
 	fmt.Printf(
 		"EUR to USD rate: %.2f \n",

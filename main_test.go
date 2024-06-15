@@ -1,6 +1,8 @@
 package main
 
 import (
+	"MrrCalc/pkg/models"
+	"MrrCalc/pkg/myTools"
 	"encoding/json"
 	"fmt"
 	"github.com/shopspring/decimal"
@@ -8,44 +10,6 @@ import (
 	"testing"
 	"time"
 )
-
-func TestReadJsonFileAndUnmarshall(t *testing.T) {
-	t.Run(
-		"check if JSON file is read and unmarshalled correctly",
-		func(t *testing.T) {
-			// Assuming you have a test JSON file `test_subscriptions.json` in the same directory
-			subscriptions, err := readJsonFileAndUnmarshall("subscriptions.json")
-			t.Logf(
-				"Subscriptions: %v, Error: %v",
-				subscriptions,
-				err,
-			)
-			assert.NoError(
-				t,
-				err,
-			)
-			assert.NotEmpty(
-				t,
-				subscriptions,
-			)
-		},
-	)
-
-	t.Run(
-		"check if non-existent file returns an error",
-		func(t *testing.T) {
-			_, err := readJsonFileAndUnmarshall("non_existent_file.json")
-			t.Logf(
-				"Error: %v",
-				err,
-			)
-			assert.Error(
-				t,
-				err,
-			)
-		},
-	)
-}
 
 func TestCalculateMRR(t *testing.T) {
 	t.Run(
@@ -208,7 +172,7 @@ func TestCalculateMRR(t *testing.T) {
 				formattedFirstDay,
 			)
 
-			var subscriptions []Subscription
+			var subscriptions []models.Subscription
 			err := json.Unmarshal(
 				[]byte(subscriptionsJSON),
 				&subscriptions,
@@ -262,7 +226,7 @@ func TestDailyMRR(t *testing.T) {
 	t.Run(
 		"check if dailyMRR is not null and not giving error",
 		func(t *testing.T) {
-			subscriptions, _ := readJsonFileAndUnmarshall("subscriptions.json")
+			subscriptions, _ := myTools.ReadJsonFileAndUnmarshall("subscriptions.json")
 			result, err := calculateDailyMRR(
 				subscriptions,
 				"USD",

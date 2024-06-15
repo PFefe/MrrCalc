@@ -105,3 +105,41 @@ func TestParseToTime(t *testing.T) {
 		},
 	)
 }
+
+func TestReadJsonFileAndUnmarshall(t *testing.T) {
+	t.Run(
+		"check if JSON file is read and unmarshalled correctly",
+		func(t *testing.T) {
+			// Assuming you have a test JSON file `test_subscriptions.json` in the same directory
+			subscriptions, err := ReadJsonFileAndUnmarshall("subscriptions.json")
+			t.Logf(
+				"Subscriptions: %v, Error: %v",
+				subscriptions,
+				err,
+			)
+			assert.NoError(
+				t,
+				err,
+			)
+			assert.NotEmpty(
+				t,
+				subscriptions,
+			)
+		},
+	)
+
+	t.Run(
+		"check if non-existent file returns an error",
+		func(t *testing.T) {
+			_, err := ReadJsonFileAndUnmarshall("non_existent_file.json")
+			t.Logf(
+				"Error: %v",
+				err,
+			)
+			assert.Error(
+				t,
+				err,
+			)
+		},
+	)
+}
