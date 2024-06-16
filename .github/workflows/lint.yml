@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.DEFAULT_GO_VERSION }}
-          go-root: /opt/hostedtoolcache/go/1.22.4/x64  # Explicitly set GOROOT here
+          go-root: /usr/local/go
 
       - name: Install golangci-lint
         run: |
