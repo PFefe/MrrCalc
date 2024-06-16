@@ -2,7 +2,7 @@ name: CI
 permissions:
   contents: read
 env:
-  DEFAULT_GO_VERSION: '1.22'
+  DEFAULT_GO_VERSION: '1.20'
 
 on:
   pull_request:
@@ -29,13 +29,6 @@ jobs:
         run: go test -tags=integration ./...
       - name: Coverage report
         run: go tool cover -func=coverage.out
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.out
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: true
 
   static-checks:
     runs-on: ubuntu-latest
@@ -54,6 +47,6 @@ jobs:
         run: golangci-lint run --timeout 5m
       - name: Go imports
         run: |
-          go get -u golang.org/x/tools/cmd/goimports
+          go install golang.org/x/tools/cmd/goimports@latest
           goimports -w .
           git diff --exit-code || (echo "Files were changed by goimports. Please format the code." && exit 1)

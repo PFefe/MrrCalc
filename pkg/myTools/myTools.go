@@ -51,7 +51,10 @@ func ReadJsonFileAndUnmarshall(path string) ([]models.Subscription, error) {
 	defer func(jsonFile *os.File) {
 		err := jsonFile.Close()
 		if err != nil {
-
+			fmt.Println(
+				"Unable to close : ",
+				path,
+			)
 		}
 	}(jsonFile)
 

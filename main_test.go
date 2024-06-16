@@ -197,27 +197,27 @@ func TestCalculateMRR(t *testing.T) {
 			)
 			assert.True(
 				t,
-				expectedPresentMRR.Equals(presentMRR),
+				expectedPresentMRR.Equal(presentMRR),
 			)
 			assert.True(
 				t,
-				expectedNewBusiness.Equals(newBusiness),
+				expectedNewBusiness.Equal(newBusiness),
 			)
 			assert.True(
 				t,
-				expectedUpgrades.Equals(upgrades),
+				expectedUpgrades.Equal(upgrades),
 			)
 			assert.True(
 				t,
-				expectedDowngrades.Equals(downgrades),
+				expectedDowngrades.Equal(downgrades),
 			)
 			assert.True(
 				t,
-				expectedChurn.Equals(churn),
+				expectedChurn.Equal(churn),
 			)
 			assert.True(
 				t,
-				expectedReactivations.Equals(reactivations),
+				expectedReactivations.Equal(reactivations),
 			)
 		},
 	)

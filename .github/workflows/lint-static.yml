@@ -2,7 +2,7 @@ name: Go Lint and Static Analysis
 permissions:
   contents: read
 env:
-  DEFAULT_GO_VERSION: '1.22'
+  DEFAULT_GO_VERSION: '1.20'
 
 on:
   push:

@@ -96,7 +96,7 @@ func calculateMRR(subscriptions []models.Subscription, currency string) (
 			}
 
 		case "active":
-			if isExpired == false {
+			if !isExpired {
 				// Calculate total MRR
 				if startedAt.Before(todaysDate) {
 					if interval == "month" {
