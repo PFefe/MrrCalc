@@ -1,0 +1,59 @@
+name: CI
+permissions:
+  contents: read
+env:
+  DEFAULT_GO_VERSION: '1.22'
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual triggering of the workflow
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Install GO
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.DEFAULT_GO_VERSION }}
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Unit tests
+        run: |
+          go test ./... -v
+          go test -coverprofile=coverage.out ./...
+      - name: Integration tests
+        run: go test -tags=integration ./...
+      - name: Coverage report
+        run: go tool cover -func=coverage.out
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.out
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: true
+
+  static-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Install GO
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.DEFAULT_GO_VERSION }}
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.50.1
+      - name: Run golangci-lint
+        run: golangci-lint run --timeout 5m
+      - name: Go imports
+        run: |
+          go get -u golang.org/x/tools/cmd/goimports
+          goimports -w .
+          git diff --exit-code || (echo "Files were changed by goimports. Please format the code." && exit 1)

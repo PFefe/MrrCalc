@@ -111,7 +111,7 @@ func TestReadJsonFileAndUnmarshall(t *testing.T) {
 		"check if JSON file is read and unmarshalled correctly",
 		func(t *testing.T) {
 			// Assuming you have a test JSON file `test_subscriptions.json` in the same directory
-			subscriptions, err := ReadJsonFileAndUnmarshall("subscriptions.json")
+			subscriptions, err := ReadJsonFileAndUnmarshall("../../testdata/subscriptions.json")
 			t.Logf(
 				"Subscriptions: %v, Error: %v",
 				subscriptions,

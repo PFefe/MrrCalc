@@ -17,13 +17,13 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.21'
+          go-version: '1.22'
 
       - name: Install dependencies
         run: go mod download
 
       - name: Run tests
-        run: go test -v ./... | tee go-test-report.txt
+        run: go test ./... -v -cover | tee go-test-report.txt
 
       - name: Upload test report
         uses: actions/upload-artifact@v2
