@@ -3,6 +3,7 @@
 # Variables
 GO := go
 GOLANGCI_LINT := $(shell go env GOPATH)/bin/golangci-lint
+GOROOT := /opt/hostedtoolcache/go/1.22.4/x64
 STATICCHECK := $(shell go env GOPATH)/bin/staticcheck
 
 # Default Go version
