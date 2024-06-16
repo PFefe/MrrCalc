@@ -7,8 +7,8 @@ import (
 
 // Subscription represents a subscription with dates parsed as time.Time
 type Subscription struct {
-	SubscriptionId string     `json:"subscription_id"`
-	CustomerId     string     `json:"customer_id"`
+	SubscriptionID string     `json:"subscription_id"`
+	CustomerID     string     `json:"customer_id"`
 	StartAt        time.Time  `json:"start_at"`
 	EndAt          *time.Time `json:"end_at"`
 	Amount         string     `json:"amount"`

@@ -1,15 +1,25 @@
 package main
 
 import (
+	"time"
+
 	"MrrCalc/pkg/currencies"
 	"MrrCalc/pkg/models"
 	"MrrCalc/pkg/myTools"
+
 	"github.com/shopspring/decimal"
-	"time"
+)
+
+const (
+	zero          = 0.0
+	months        = 12
+	YearInterval  = "year"
+	MonthInterval = "month"
 )
 
 func calculateMRR(subscriptions []models.Subscription, currency string) (
-	decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal) {
+	decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal,
+) {
 	todaysDate := time.Now()
 	previousMonth := todaysDate.AddDate(
 		0,
@@ -36,12 +46,12 @@ func calculateMRR(subscriptions []models.Subscription, currency string) (
 		1,
 		previousMonth.Location(),
 	)
-	presentMRR := decimal.NewFromFloat(.0)
-	newBusiness := decimal.NewFromFloat(.0)
-	upgrades := decimal.NewFromFloat(.0)
-	downgrades := decimal.NewFromFloat(.0)
-	churn := decimal.NewFromFloat(.0)
-	reactivations := decimal.NewFromFloat(.0)
+	presentMRR := decimal.NewFromFloat(zero)
+	newBusiness := decimal.NewFromFloat(zero)
+	upgrades := decimal.NewFromFloat(zero)
+	downgrades := decimal.NewFromFloat(zero)
+	churn := decimal.NewFromFloat(zero)
+	reactivations := decimal.NewFromFloat(zero)
 	previousAmounts := make(map[string]decimal.Decimal)
 	previouslyCancelled := make(map[string]bool)
 	previouslyAmended := make(map[string]bool)
@@ -78,66 +88,66 @@ func calculateMRR(subscriptions []models.Subscription, currency string) (
 				cancelledAt := *sub.CancelledAt
 
 				if cancelledAt.After(firstDayOfPreviousMonth) {
-					if interval == "month" {
+					if interval == MonthInterval {
 						churn = churn.Add(convertedAmount)
-					} else if interval == "year" {
-						churn = churn.Add(convertedAmount.Div(decimal.NewFromInt(12)))
+					} else if interval == YearInterval {
+						churn = churn.Add(convertedAmount.Div(decimal.NewFromInt(months)))
 					}
 				}
 				if cancelledAt.Before(lastDayOfPreviousMonth) {
-					previouslyCancelled[sub.CustomerId] = true
+					previouslyCancelled[sub.CustomerID] = true
 				}
 			}
 
 		case "amended":
 			if startedAt.Before(lastDayOfPreviousMonth) {
-				previouslyAmended[sub.CustomerId] = true
-				previousAmounts[sub.CustomerId] = convertedAmount
+				previouslyAmended[sub.CustomerID] = true
+				previousAmounts[sub.CustomerID] = convertedAmount
 			}
 
 		case "active":
 			if !isExpired {
 				// Calculate total MRR
 				if startedAt.Before(todaysDate) {
-					if interval == "month" {
+					if interval == MonthInterval {
 						presentMRR = presentMRR.Add(convertedAmount)
-					} else if interval == "year" {
-						presentMRR = presentMRR.Add(convertedAmount.Div(decimal.NewFromInt(12)))
+					} else if interval == YearInterval {
+						presentMRR = presentMRR.Add(convertedAmount.Div(decimal.NewFromInt(months)))
 					}
 				}
 				if startedAt.After(lastDayOfPreviousMonth) {
 					// Check if the customer has previously cancelled
 					// Calculate reactivations
-					if previouslyCancelled[sub.CustomerId] {
-						if interval == "month" {
+					if previouslyCancelled[sub.CustomerID] {
+						if interval == MonthInterval {
 							reactivations = reactivations.Add(convertedAmount)
-						} else if interval == "year" {
-							reactivations = reactivations.Add(convertedAmount.Div(decimal.NewFromInt(12)))
+						} else if interval == YearInterval {
+							reactivations = reactivations.Add(convertedAmount.Div(decimal.NewFromInt(months)))
 						}
 					}
 					// Calculate new business
-					if !previouslyCancelled[sub.CustomerId] && !previouslyAmended[sub.CustomerId] {
-						if interval == "month" {
+					if !previouslyCancelled[sub.CustomerID] && !previouslyAmended[sub.CustomerID] {
+						if interval == MonthInterval {
 							newBusiness = newBusiness.Add(convertedAmount)
-						} else if interval == "year" {
-							newBusiness = newBusiness.Add(convertedAmount.Div(decimal.NewFromInt(12)))
+						} else if interval == YearInterval {
+							newBusiness = newBusiness.Add(convertedAmount.Div(decimal.NewFromInt(months)))
 						}
 					}
 					// Calculate upgrades and downgrades
-					if previouslyAmended[sub.CustomerId] {
-						prevAmount := previousAmounts[sub.CustomerId]
+					if previouslyAmended[sub.CustomerID] {
+						prevAmount := previousAmounts[sub.CustomerID]
 						if prevAmount.LessThan(convertedAmount) {
-							if interval == "month" {
+							if interval == MonthInterval {
 								upgrades = upgrades.Add(convertedAmount.Sub(prevAmount))
-							} else if interval == "year" {
-								upgrades = upgrades.Add(convertedAmount.Sub(prevAmount).Div(decimal.NewFromInt(12)))
+							} else if interval == YearInterval {
+								upgrades = upgrades.Add(convertedAmount.Sub(prevAmount).Div(decimal.NewFromInt(months)))
 							}
 						}
 						if prevAmount.GreaterThan(convertedAmount) {
-							if interval == "month" {
+							if interval == MonthInterval {
 								downgrades = downgrades.Add(prevAmount.Sub(convertedAmount))
-							} else if interval == "year" {
-								downgrades = downgrades.Add(prevAmount.Sub(convertedAmount).Div(decimal.NewFromInt(12)))
+							} else if interval == YearInterval {
+								downgrades = downgrades.Add(prevAmount.Sub(convertedAmount).Div(decimal.NewFromInt(months)))
 							}
 						}
 					}
@@ -179,7 +189,7 @@ func calculateDailyMRR(subscriptions []models.Subscription, currency string, per
 	var dailyMRRs []DailyMRR
 
 	for periodStartAt.Before(periodEndsAt) {
-		dailyMRR := decimal.NewFromFloat(.0)
+		dailyMRR := decimal.NewFromFloat(zero)
 		for i := 0; i < len(subscriptions); i++ {
 			sub := subscriptions[i]
 			status := sub.Status
@@ -209,11 +219,11 @@ func calculateDailyMRR(subscriptions []models.Subscription, currency string, per
 
 			startedAt := sub.StartAt
 
-			if isExpiredAt == false && startedAt.Before(periodStartAt) && isCancelled == false {
-				if interval == "month" {
+			if !isExpiredAt && startedAt.Before(periodStartAt) && !isCancelled {
+				if interval == MonthInterval {
 					dailyMRR = dailyMRR.Add(convertedAmount)
-				} else if interval == "year" {
-					dailyMRR = dailyMRR.Add(convertedAmount.Div(decimal.NewFromInt(12)))
+				} else if interval == YearInterval {
+					dailyMRR = dailyMRR.Add(convertedAmount.Div(decimal.NewFromInt(months)))
 				}
 			}
 		}

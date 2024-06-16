@@ -1,14 +1,16 @@
 package rates
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCurrencyRates(t *testing.T) {
 	t.Run(
 		"valid conversion from USD to EUR",
 		func(t *testing.T) {
+			t.Parallel()
 			param := &RequestParameter{From: "USD", To: "EUR"}
 			expected := 0.85
 
@@ -28,6 +30,7 @@ func TestCurrencyRates(t *testing.T) {
 	t.Run(
 		"unsupported currency",
 		func(t *testing.T) {
+			t.Parallel()
 			param := &RequestParameter{From: "XYZ", To: "USD"}
 
 			_, err := CurrencyRates(param)
@@ -41,6 +44,7 @@ func TestCurrencyRates(t *testing.T) {
 	t.Run(
 		"conversion rate not found",
 		func(t *testing.T) {
+			t.Parallel()
 			param := &RequestParameter{From: "USD", To: "XYZ"}
 
 			_, err := CurrencyRates(param)

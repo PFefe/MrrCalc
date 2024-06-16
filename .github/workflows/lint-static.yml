@@ -20,25 +20,18 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v2
         with:
           go-version: ${{ env.DEFAULT_GO_VERSION }}
 
-      - name: Cache golangci-lint
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-golangci-lint-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-golangci-lint-
-
-      - name: Install golangci-lint
+      - name: Install golangci-lint and staticcheck
         run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.50.1
+          go install honnef.co/go/tools/cmd/staticcheck@latest
 
-      - name: Run golangci-lint
+      - name: Run lint
         run: |
-          golangci-lint run --timeout 5m
+          make lint
 
   staticcheck:
     name: Static Analysis with Staticcheck

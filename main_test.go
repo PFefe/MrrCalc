@@ -1,20 +1,23 @@
 package main
 
 import (
-	"MrrCalc/pkg/models"
-	"MrrCalc/pkg/myTools"
 	"encoding/json"
 	"fmt"
-	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"MrrCalc/pkg/models"
+	"MrrCalc/pkg/myTools"
+
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCalculateMRR(t *testing.T) {
 	t.Run(
 		"check if presentMRR is calculated",
 		func(t *testing.T) {
+			t.Parallel()
 			// Test case 1
 			today := time.Now()
 			firstDayOfMonth := time.Date(
@@ -222,10 +225,12 @@ func TestCalculateMRR(t *testing.T) {
 		},
 	)
 }
+
 func TestDailyMRR(t *testing.T) {
 	t.Run(
 		"check if dailyMRR is not null and not giving error",
 		func(t *testing.T) {
+			t.Parallel()
 			subscriptions, _ := myTools.ReadJsonFileAndUnmarshall("subscriptions.json")
 			result, err := calculateDailyMRR(
 				subscriptions,

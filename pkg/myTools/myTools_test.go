@@ -1,15 +1,17 @@
 package myTools
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseToFloat(t *testing.T) {
 	t.Run(
 		"check if any string is parsed into a float",
 		func(t *testing.T) {
+			t.Parallel()
 			// Test case 1
 			value := "100.00"
 			expectedResult := 100.00
@@ -34,6 +36,7 @@ func TestParseToFloat(t *testing.T) {
 	t.Run(
 		"check if invalid string returns an error",
 		func(t *testing.T) {
+			t.Parallel()
 			// Test case 2
 			value := "invalid"
 			result, err := ParseToFloat(value)
@@ -59,6 +62,7 @@ func TestParseToTime(t *testing.T) {
 	t.Run(
 		"check if valid RFC3339 string is parsed into a time.Time",
 		func(t *testing.T) {
+			t.Parallel()
 			// Test case 1
 			value := "2024-06-12T12:00:00Z"
 			expectedResult, _ := time.Parse(
@@ -86,6 +90,7 @@ func TestParseToTime(t *testing.T) {
 	t.Run(
 		"check if invalid string returns an error",
 		func(t *testing.T) {
+			t.Parallel()
 			// Test case 2
 			value := "invalid"
 			result, err := ParseToTime(value)
@@ -110,6 +115,7 @@ func TestReadJsonFileAndUnmarshall(t *testing.T) {
 	t.Run(
 		"check if JSON file is read and unmarshalled correctly",
 		func(t *testing.T) {
+			t.Parallel()
 			// Assuming you have a test JSON file `test_subscriptions.json` in the same directory
 			subscriptions, err := ReadJsonFileAndUnmarshall("../../testdata/subscriptions.json")
 			t.Logf(
@@ -131,6 +137,7 @@ func TestReadJsonFileAndUnmarshall(t *testing.T) {
 	t.Run(
 		"check if non-existent file returns an error",
 		func(t *testing.T) {
+			t.Parallel()
 			_, err := ReadJsonFileAndUnmarshall("non_existent_file.json")
 			t.Logf(
 				"Error: %v",

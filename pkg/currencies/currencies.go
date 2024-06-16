@@ -2,8 +2,9 @@
 package currencies
 
 import (
-	rates "MrrCalc/pkg/rates"
 	"fmt"
+
+	rates "MrrCalc/pkg/rates"
 )
 
 type Currency struct {
@@ -20,7 +21,7 @@ func ConvertCurrency(params *Currency) (float64, error) {
 	rate, err := rates.CurrencyRates(param)
 	if err != nil {
 		return 0, fmt.Errorf(
-			"error getting rate: %v",
+			"error getting rate: %w",
 			err,
 		)
 	}

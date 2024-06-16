@@ -1,10 +1,15 @@
 package main
 
 import (
-	"MrrCalc/pkg/currencies"
-	"MrrCalc/pkg/myTools"
 	"flag"
 	"fmt"
+	"log"
+
+	"MrrCalc/pkg/myTools"
+)
+
+const (
+	two = 2
 )
 
 var (
@@ -36,52 +41,45 @@ func main() {
 
 	subscriptions, err := myTools.ReadJsonFileAndUnmarshall(input)
 	if err != nil {
-		fmt.Printf(
+		log.Printf(
 			"Error reading and unmarshalling the file: %v\n",
 			err,
 		)
 		return
 	}
-	/*	fmt.Println("Json file read success")
-		for _, sub := range subscriptions {
-			fmt.Printf(
-				"%+v\n",
-				sub,
-			)
-		}*/
 	presentMRR, newBusiness, upgrades, downgrades, churn, reactivations := calculateMRR(
 		subscriptions,
 		currency,
 	)
 	fmt.Printf(
 		"Present MRR Net Value: %s %s\n",
-		presentMRR.StringFixed(2),
+		presentMRR.StringFixed(two),
 		currency,
 	)
 	fmt.Println("Present MRR Breakdown:")
 	fmt.Printf(
 		"- New Business: %s %s\n",
-		newBusiness.StringFixed(2),
+		newBusiness.StringFixed(two),
 		currency,
 	)
 	fmt.Printf(
 		"- Upgrades: %s %s\n",
-		upgrades.StringFixed(2),
+		upgrades.StringFixed(two),
 		currency,
 	)
 	fmt.Printf(
 		"- Downgrades: -%s %s\n",
-		downgrades.StringFixed(2),
+		downgrades.StringFixed(two),
 		currency,
 	)
 	fmt.Printf(
 		"- Churn: -%s %s\n",
-		churn.StringFixed(2),
+		churn.StringFixed(two),
 		currency,
 	)
 	fmt.Printf(
 		"- Reactivations: %s %s\n",
-		reactivations.StringFixed(2),
+		reactivations.StringFixed(two),
 		currency,
 	)
 
@@ -91,7 +89,7 @@ func main() {
 		period,
 	)
 	if err != nil {
-		fmt.Printf(
+		log.Printf(
 			"Error calculating daily MRR: %v\n",
 			err,
 		)
@@ -110,31 +108,8 @@ func main() {
 		fmt.Printf(
 			"| %s |     %s       |\n",
 			dailyMRR.Date,
-			dailyMRR.MRR.StringFixed(2),
+			dailyMRR.MRR.StringFixed(two),
 		)
 	}
 	fmt.Println("|------------|------------------|")
-
-	gbpToUsd, _ := currencies.ConvertCurrency(
-		&currencies.Currency{
-			From:   "GBP",
-			To:     "USD",
-			Amount: 1.00,
-		},
-	)
-	fmt.Printf(
-		"GBP to USD rate: %.2f \n",
-		gbpToUsd,
-	)
-	eurToUsd, _ := currencies.ConvertCurrency(
-		&currencies.Currency{
-			From:   "EUR",
-			To:     "USD",
-			Amount: 1.00,
-		},
-	)
-	fmt.Printf(
-		"EUR to USD rate: %.2f \n",
-		eurToUsd,
-	)
 }

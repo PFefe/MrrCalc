@@ -1,13 +1,15 @@
 package myTools
 
 import (
-	"MrrCalc/pkg/models"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strconv"
 	"time"
+
+	"MrrCalc/pkg/models"
 )
 
 func ParseToFloat(value string) (float64, error) {
@@ -16,7 +18,7 @@ func ParseToFloat(value string) (float64, error) {
 		64,
 	)
 	if err != nil {
-		fmt.Printf(
+		log.Printf(
 			"Error parsing amount: %v\n",
 			err,
 		)
@@ -31,7 +33,7 @@ func ParseToTime(value string) (time.Time, error) {
 		value,
 	)
 	if err != nil {
-		fmt.Printf(
+		log.Printf(
 			"Error parsing time: %v\n",
 			err,
 		)
@@ -44,7 +46,7 @@ func ReadJsonFileAndUnmarshall(path string) ([]models.Subscription, error) {
 	jsonFile, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"unable to read the file: %v",
+			"unable to read the file: %w",
 			err,
 		)
 	}
@@ -62,7 +64,7 @@ func ReadJsonFileAndUnmarshall(path string) ([]models.Subscription, error) {
 	read, err := io.ReadAll(jsonFile)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"unable to read the JSON file: %v",
+			"unable to read the JSON file: %w",
 			err,
 		)
 	}
@@ -74,7 +76,7 @@ func ReadJsonFileAndUnmarshall(path string) ([]models.Subscription, error) {
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"unable to unmarshal the json file: %v",
+			"unable to unmarshal the json file: %w",
 			err,
 		)
 	}
