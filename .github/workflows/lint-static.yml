@@ -5,13 +5,10 @@ env:
   DEFAULT_GO_VERSION: '1.20'
 
 on:
-  push:
-    branches:
-      - main
-      - 'feature/*'
   pull_request:
     branches:
       - main
+  workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
   lint:
