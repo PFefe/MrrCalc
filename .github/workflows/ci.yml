@@ -2,7 +2,7 @@ name: CI
 permissions:
   contents: read
 env:
-  DEFAULT_GO_VERSION: '1.20'
+  DEFAULT_GO_VERSION: '1.22'
 
 on:
   pull_request:
