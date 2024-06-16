@@ -3,7 +3,7 @@
 # Variables
 GO := go
 GOLANGCI_LINT := $(shell go env GOPATH)/bin/golangci-lint
-GOROOT := /opt/hostedtoolcache/go/1.22.4/x64
+GOROOT := /usr/local/go
 STATICCHECK := $(shell go env GOPATH)/bin/staticcheck
 
 # Default Go version
@@ -17,7 +17,7 @@ all: lint
 lint: golangci-lint staticcheck
 
 golangci-lint:
-	$(GOLANGCI_LINT) run --timeout 5m ./...
+    @GOROOT=$(GOROOT) $(GOLANGCI_LINT) run --timeout 5m ./...
 
 staticcheck:
 	$(STATICCHECK) ./...
