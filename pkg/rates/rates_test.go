@@ -1,9 +1,8 @@
 package rates
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestCurrencyRates(t *testing.T) {

@@ -163,7 +163,7 @@ type DailyMRR struct {
 	MRR  decimal.Decimal
 }
 
-func calculateDailyMRR(subscriptions []models.Subscription, currency string, period int) ([]DailyMRR, error) {
+func calculateDailyMRR(subscriptions []models.Subscription, currency string, period int) []DailyMRR {
 	todaysDate := time.Now()
 	periodStartAt := time.Date(
 		todaysDate.Year(),
@@ -241,5 +241,5 @@ func calculateDailyMRR(subscriptions []models.Subscription, currency string, per
 			1,
 		)
 	}
-	return dailyMRRs, nil
+	return dailyMRRs
 }

@@ -232,14 +232,10 @@ func TestDailyMRR(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 			subscriptions, _ := myTools.ReadJsonFileAndUnmarshall("subscriptions.json")
-			result, err := calculateDailyMRR(
+			result := calculateDailyMRR(
 				subscriptions,
 				"USD",
 				1,
-			)
-			assert.NoError(
-				t,
-				err,
 			)
 			assert.NotNil(
 				t,

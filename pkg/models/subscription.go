@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -33,7 +34,10 @@ func (s *Subscription) UnmarshalJSON(data []byte) error {
 		data,
 		&aux,
 	); err != nil {
-		return err
+		return fmt.Errorf(
+			"Unmarshall error %w \n",
+			err,
+		)
 	}
 	var err error
 	s.StartAt, err = time.Parse(

@@ -83,18 +83,11 @@ func main() {
 		currency,
 	)
 
-	dailyMRRs, err := calculateDailyMRR(
+	dailyMRRs := calculateDailyMRR(
 		subscriptions,
 		currency,
 		period,
 	)
-	if err != nil {
-		log.Printf(
-			"Error calculating daily MRR: %v\n",
-			err,
-		)
-		return
-	}
 
 	// Printing the daily MRR values
 	fmt.Println("\n Daily MRR:")
