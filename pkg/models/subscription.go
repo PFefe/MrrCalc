@@ -35,7 +35,7 @@ func (s *Subscription) UnmarshalJSON(data []byte) error {
 		&aux,
 	); err != nil {
 		return fmt.Errorf(
-			"Unmarshall error %w \n",
+			"unmarshall error %w ",
 			err,
 		)
 	}
