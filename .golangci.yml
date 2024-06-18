@@ -1,0 +1,74 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+issues:
+  exclude-rules:
+    # Exclude known issues in specific directories
+    - path: _test.go
+      linters:
+        - errcheck
+        - govet
+    - path: /usr/local/go/src
+      linters:
+        - errcheck
+        - govet
+
+linters:
+  disable-all: true
+  enable:
+    - asciicheck
+    - bodyclose
+    - cyclop
+    - decorder
+    - dogsled
+    - dupl
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exportloopref
+    - forcetypeassert
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - gofumpt
+    - goheader
+    - goimports
+    - gomoddirectives
+    - gomodguard
+    - gosec
+    - gosimple
+    - govet
+    - importas
+    - ineffassign
+    - lll
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - noctx
+    - prealloc
+    - predeclared
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - unconvert
+    - unused
+    - unparam
+    - wastedassign
+    - wrapcheck
+    - whitespace
+    - wsl
+
+output:
+  print-issued-lines: true
+
+linters-settings:
+  goimports:
+    local-prefixes: github.com/PFefe/MrrCalc
