@@ -57,7 +57,6 @@ func TestParseToFloat(t *testing.T) {
 		},
 	)
 }
-
 func TestParseToTime(t *testing.T) {
 	t.Run(
 		"check if valid RFC3339 string is parsed into a time.Time",
