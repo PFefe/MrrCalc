@@ -1,11 +1,12 @@
 package main
 
 import (
+	"MrrCalc/pkg/currencies"
+	"MrrCalc/pkg/myTools"
+	"MrrCalc/pkg/rates"
 	"flag"
 	"fmt"
 	"log"
-
-	"MrrCalc/pkg/myTools"
 )
 
 const (
@@ -47,7 +48,11 @@ func main() {
 		)
 		return
 	}
+	rateProvider := &rates.APIService{}
+	converter := currencies.NewConverter(rateProvider)
+
 	presentMRR, newBusiness, upgrades, downgrades, churn, reactivations := calculateMRR(
+		converter,
 		subscriptions,
 		currency,
 	)
@@ -84,6 +89,7 @@ func main() {
 	)
 
 	dailyMRRs := calculateDailyMRR(
+		converter,
 		subscriptions,
 		currency,
 		period,

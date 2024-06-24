@@ -1,13 +1,11 @@
 package main
 
 import (
-	"time"
-
 	"MrrCalc/pkg/currencies"
 	"MrrCalc/pkg/models"
 	"MrrCalc/pkg/myTools"
-
 	"github.com/shopspring/decimal"
+	"time"
 )
 
 const (
@@ -17,7 +15,7 @@ const (
 	MonthInterval = "month"
 )
 
-func calculateMRR(subscriptions []models.Subscription, currency string) (
+func calculateMRR(converter *currencies.Converter, subscriptions []models.Subscription, currency string) (
 	decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal,
 ) {
 	todaysDate := time.Now()
@@ -69,13 +67,16 @@ func calculateMRR(subscriptions []models.Subscription, currency string) (
 
 		amount, _ := myTools.ParseToFloat(sub.Amount)
 
-		value, _ := currencies.ConvertCurrency(
+		value, err := converter.Convert(
 			&currencies.Currency{
 				From:   sub.Currency,
 				To:     currency,
 				Amount: amount,
 			},
 		)
+		if err != nil {
+			continue
+		}
 		convertedAmount := decimal.NewFromFloat(
 			value,
 		)
@@ -163,7 +164,7 @@ type DailyMRR struct {
 	MRR  decimal.Decimal
 }
 
-func calculateDailyMRR(subscriptions []models.Subscription, currency string, period int) []DailyMRR {
+func calculateDailyMRR(converter *currencies.Converter, subscriptions []models.Subscription, currency string, period int) []DailyMRR {
 	todaysDate := time.Now()
 	periodStartAt := time.Date(
 		todaysDate.Year(),
@@ -206,13 +207,16 @@ func calculateDailyMRR(subscriptions []models.Subscription, currency string, per
 
 			amount, _ := myTools.ParseToFloat(sub.Amount)
 
-			value, _ := currencies.ConvertCurrency(
+			value, err := converter.Convert(
 				&currencies.Currency{
 					From:   sub.Currency,
 					To:     currency,
 					Amount: amount,
 				},
 			)
+			if err != nil {
+				continue
+			}
 			convertedAmount := decimal.NewFromFloat(
 				value,
 			)

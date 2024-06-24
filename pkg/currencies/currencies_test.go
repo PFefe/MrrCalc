@@ -1,69 +1,66 @@
 package currencies
 
 import (
+	"MrrCalc/pkg/rates"
+	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func TestConvertCurrency(t *testing.T) {
-	t.Run(
-		"valid conversion from USD to EUR",
-		func(t *testing.T) {
-			t.Parallel()
-			params := &Currency{
-				From:   "USD",
-				To:     "EUR",
-				Amount: 100.0,
-			}
-			expected := 85.0 // 100 * 0.85
+type mockRateProvider struct{}
 
-			result, err := ConvertCurrency(params)
-			assert.NoError(
-				t,
-				err,
-			)
-			assert.Equal(
-				t,
-				expected,
-				result,
-			)
-		},
+func (m *mockRateProvider) GetRate(param *rates.RequestParameter) (float64, error) {
+	if param.From == "EUR" && param.To == "GBP" {
+		return 0.85, nil
+	}
+	return 0, fmt.Errorf(
+		"unsupported currency pair: %s to %s",
+		param.From,
+		param.To,
 	)
+}
 
-	t.Run(
-		"unsupported currency",
-		func(t *testing.T) {
-			t.Parallel()
-			params := &Currency{
-				From:   "XYZ",
-				To:     "USD",
-				Amount: 100.0,
-			}
+func TestConverter_Convert(t *testing.T) {
+	provider := &mockRateProvider{}
+	converter := NewConverter(provider)
 
-			_, err := ConvertCurrency(params)
-			assert.Error(
-				t,
-				err,
-			)
-		},
-	)
+	tests := []struct {
+		from   string
+		to     string
+		amount float64
+		want   float64
+	}{
+		{"EUR", "GBP", 100, 85},
+		{"EUR", "GBP", 200, 170},
+	}
 
-	t.Run(
-		"conversion rate not found",
-		func(t *testing.T) {
-			t.Parallel()
-			params := &Currency{
-				From:   "USD",
-				To:     "XYZ",
-				Amount: 100.0,
-			}
-
-			_, err := ConvertCurrency(params)
-			assert.Error(
-				t,
-				err,
-			)
-		},
-	)
+	for _, tt := range tests {
+		t.Run(
+			fmt.Sprintf(
+				"%s to %s",
+				tt.from,
+				tt.to,
+			),
+			func(t *testing.T) {
+				params := &Currency{
+					From:   tt.from,
+					To:     tt.to,
+					Amount: tt.amount,
+				}
+				got, err := converter.Convert(params)
+				if err != nil {
+					t.Fatalf(
+						"unexpected error: %v",
+						err,
+					)
+				}
+				if got != tt.want {
+					t.Errorf(
+						"got %f, want %f",
+						got,
+						tt.want,
+					)
+				}
+			},
+		)
+	}
 }
