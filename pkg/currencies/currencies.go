@@ -2,9 +2,8 @@
 package currencies
 
 import (
+	"MrrCalc/pkg/rates"
 	"fmt"
-
-	rates "MrrCalc/pkg/rates"
 )
 
 type Currency struct {
@@ -13,12 +12,16 @@ type Currency struct {
 	Amount float64
 }
 
-func ConvertCurrency(params *Currency) (float64, error) {
+type Converter struct {
+	provider rates.ExchangeRateProvider
+}
+
+func (c *Converter) Convert(params *Currency) (float64, error) {
 	param := &rates.RequestParameter{
 		From: params.From,
 		To:   params.To,
 	}
-	rate, err := rates.CurrencyRates(param)
+	rate, err := c.provider.GetRate(param)
 	if err != nil {
 		return 0, fmt.Errorf(
 			"error getting rate: %w",
@@ -26,4 +29,10 @@ func ConvertCurrency(params *Currency) (float64, error) {
 		)
 	}
 	return params.Amount * rate, nil
+}
+
+func NewConverter(provider rates.ExchangeRateProvider) *Converter {
+	return &Converter{
+		provider: provider,
+	}
 }
