@@ -30,7 +30,7 @@ func (m *mockExchangeRateProvider) GetRate(param *RequestParameter) (float64, er
 }*/
 
 func TestCurrencyRates(t *testing.T) {
-	//mock := &mockExchangeRateProvider{}
+	// mock := &mockExchangeRateProvider{}
 	svc := APIService{}
 
 	tests := []struct {
