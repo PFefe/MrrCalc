@@ -45,7 +45,10 @@ func (s *Subscription) UnmarshalJSON(data []byte) error {
 		aux.StartAt,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf(
+			"error parsing start_at %w",
+			err,
+		)
 	}
 	if aux.EndAt != nil {
 		endAt, err := time.Parse(
@@ -53,7 +56,10 @@ func (s *Subscription) UnmarshalJSON(data []byte) error {
 			*aux.EndAt,
 		)
 		if err != nil {
-			return err
+			return fmt.Errorf(
+				"error parsing end_at %w",
+				err,
+			)
 		}
 		s.EndAt = &endAt
 	}
@@ -63,7 +69,10 @@ func (s *Subscription) UnmarshalJSON(data []byte) error {
 			*aux.CancelledAt,
 		)
 		if err != nil {
-			return err
+			return fmt.Errorf(
+				"error parsing cancelled_at %w",
+				err,
+			)
 		}
 		s.CancelledAt = &cancelledAt
 	}
