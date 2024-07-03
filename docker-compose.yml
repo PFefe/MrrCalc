@@ -12,17 +12,5 @@ services:
       MYSQL_PASSWORD: rootpassword
     volumes:
       - db_data:/var/lib/mysql
-
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    depends_on:
-      - db
-    volumes:
-      - .:/app
-    entrypoint: ["sh", "-c", "ls -l /app && /app/MrrCalc"]
-    command: ["--currency", "USD", "--period", "5", "--input", "/app/subscriptions.json"]
-
 volumes:
   db_data:
