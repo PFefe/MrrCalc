@@ -14,6 +14,9 @@ COPY . .
 # Build the Go binary
 RUN go build -o MrrCalc
 
+# List the files to ensure the binary is built
+RUN ls -l /app
+
 # Final stage
 FROM alpine:3.18
 
@@ -27,6 +30,9 @@ COPY --from=builder /app/subscriptions1.json /app/subscriptions1.json
 
 # Ensure the binary has execute permissions
 RUN chmod +x /app/MrrCalc
+
+# List the files to ensure they are copied correctly
+RUN ls -l /app
 
 # Command to run the executable
 ENTRYPOINT ["/app/MrrCalc"]
