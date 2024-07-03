@@ -37,3 +37,4 @@ RUN ls -l /app
 # Command to run the executable
 ENTRYPOINT ["/app/MrrCalc"]
 CMD ["--currency", "USD", "--period", "5", "--input", "/app/subscriptions.json"]
+
