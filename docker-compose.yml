@@ -21,7 +21,7 @@ services:
       - db
     volumes:
       - .:/app
-    entrypoint: ["/app/MrrCalc"]
+    entrypoint: ["sh", "-c", "ls -l /app && /app/MrrCalc"]
     command: ["--currency", "USD", "--period", "5", "--input", "/app/subscriptions.json"]
 
 volumes:
