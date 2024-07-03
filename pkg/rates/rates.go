@@ -21,7 +21,11 @@ type ExchangeRateProvider interface {
 type APIService struct{}
 
 type apiResponse struct {
-	Rates map[string]map[string]float64 `json:"rates"`
+	Amount    float64                       `json:"amount"`
+	Base      string                        `json:"base"`
+	StartDate string                        `json:"start_date"`
+	EndDate   string                        `json:"end_date"`
+	Rates     map[string]map[string]float64 `json:"rates"`
 }
 
 func (s *APIService) GetRate(param *RequestParameter) (float64, error) {
@@ -69,8 +73,8 @@ func (s *APIService) GetRate(param *RequestParameter) (float64, error) {
 		)
 	}
 
-	// Get the latest available rate
-	for _, rates := range response.Rates {
+	// Get the rate for today
+	if rates, ok := response.Rates[start]; ok {
 		if rate, ok := rates[param.To]; ok {
 			return rate, nil
 		}
@@ -80,5 +84,4 @@ func (s *APIService) GetRate(param *RequestParameter) (float64, error) {
 		"rate for %s not found",
 		param.To,
 	)
-
 }
