@@ -30,3 +30,9 @@ func (c *Converter) Convert(params *Currency) (float64, error) {
 	}
 	return params.Amount * rate, nil
 }
+
+func NewConverter(provider rates.ExchangeRateProvider) *Converter {
+	return &Converter{
+		provider: provider,
+	}
+}
